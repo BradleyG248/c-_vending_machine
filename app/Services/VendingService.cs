@@ -1,18 +1,19 @@
 using System;
 using System.Collections.Generic;
+using vending_machine.Interfaces;
 using vending_machine.Models;
 namespace vending_machine.Services
 {
   class VendingService
   {
     private Store _store = new Store();
-    public string DrawSnacks()
+    public string DrawMerch()
     {
       string template = "";
-      List<Snack> snacks = _store.Snacks;
-      for (int i = 0; i < _store.Snacks.Count; i++)
+      List<ISellable> snacks = _store.Merchandise;
+      for (int i = 0; i < _store.Merchandise.Count; i++)
       {
-        Snack snack = _store.Snacks[i];
+        ISellable snack = _store.Merchandise[i];
         if (snack.Stock < 1)
         {
           template += $"{i + 1}. Out of Stock\n";
@@ -32,20 +33,40 @@ namespace vending_machine.Services
       _store.User.Name = name;
       Console.WriteLine($"It's your lucky day, {name}! Glorious Leader has granted you ${_store.User.Credit} credit for this vending machine!");
     }
+    public void AddQuarter(int num)
+    {
+      double change = num * 0.25;
+      if (_store.User.Credit >= change)
+      {
+        _store.User.Credit -= change;
+        _store.Balance += change;
+        Console.WriteLine($"Balance: ${_store.Balance}, Credit: ${_store.User.Credit}");
+      }
+      else
+      {
+        Console.WriteLine("You don't have that much!");
+      }
+    }
+    public void GiveChange()
+    {
+      _store.User.Credit += _store.Balance;
+      Console.WriteLine($"Quarters returned: {_store.Balance / 0.25}. Current Credit: ${_store.User.Credit}.");
+      _store.Balance = 0;
+    }
     public void BuySnack(int i)
     {
       Console.Clear();
       i--;
-      Snack snack = _store.Snacks[i];
-      if (snack.Price > _store.User.Credit)
+      ISellable snack = _store.Merchandise[i];
+      if (snack.Price > _store.Balance)
       {
-        Console.WriteLine($"You don't have enough credit for that! You have ${_store.User.Credit}");
+        Console.WriteLine($"You don't have enough quarters for that! Machine balance: ${_store.Balance}");
       }
       else
       {
         snack.Stock--;
-        _store.User.Credit -= snack.Price;
-        Console.WriteLine($"You purchased {snack.Name} for ${snack.Price}. You now have ${_store.User.Credit}");
+        _store.Balance -= snack.Price;
+        Console.WriteLine($"You purchased {snack.Name} for ${snack.Price}. You now have ${_store.Balance}");
       }
     }
   }
